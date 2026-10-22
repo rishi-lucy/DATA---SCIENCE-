@@ -1,9 +1,11 @@
 /* Lab3D layer: 4-language compiler panels, 3D PDF flipbook, 3D hero + tilt. Loaded after app.js. */
 (function(){
 const LANGS=["Python","Java","C","C++"];
-const CFG=Object.assign({pistonUrl:"https://emkc.org/api/v2/piston/execute",judge0Url:"https://ce.judge0.com",customUrl:""},window.LAB_CONFIG||{});
+const CFG=Object.assign({pistonUrl:"https://emkc.org/api/v2/piston/execute",judge0Url:"https://ce.judge0.com",wandboxUrl:"https://wandbox.org/api/compile.json",customUrl:""},window.LAB_CONFIG||{});
 const PIS={Python:["python","*","main.py"],Java:["java","*","Main.java"],C:["c","*","main.c"],"C++":["c++","*","main.cpp"]};
 const J0={Python:71,Java:62,C:50,"C++":54};
+/* Wandbox has a permissive CORS policy and needs no key; the other services are fallbacks. */
+const WB={C:"gcc-head-c","C++":"gcc-head",Java:"openjdk-jdk-22+36"};
 const E=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $=s=>document.querySelector(s);
 
@@ -22,10 +24,17 @@ async function viaJudge0(base,lang,code,stdin){
   const d=await post(base.replace(/\/$/,"")+"/submissions?base64_encoded=false&wait=true",{source_code:code,language_id:J0[lang],stdin});
   return{compile:d.compile_output||"",stdout:d.stdout||"",stderr:d.stderr||d.message||"",code:d.exit_code};
 }
+async function viaWandbox(url,lang,code,stdin){
+  /* Wandbox stores the source as prog.java, so a public class must not be called Main. */
+  const src=lang==="Java"?code.replace(/\bclass\s+Main\b/g,"class prog"):code;
+  const d=await post(url,{compiler:WB[lang],code:src,stdin},60000);
+  if(d.error)throw new Error(d.error);
+  return{compile:d.compiler_error||"",stdout:d.program_output||"",stderr:d.program_error||"",code:Number(d.status)};
+}
 async function runRemote(lang,code,stdin,say){
   const T=[];
   if(CFG.customUrl)T.push(["your server",()=>viaPiston(CFG.customUrl,lang,code,stdin)]);
-  T.push(["Piston",()=>viaPiston(CFG.pistonUrl,lang,code,stdin)],["Judge0",()=>viaJudge0(CFG.judge0Url,lang,code,stdin)]);
+  T.push(["Wandbox",()=>viaWandbox(CFG.wandboxUrl,lang,code,stdin)],["Piston",()=>viaPiston(CFG.pistonUrl,lang,code,stdin)],["Judge0",()=>viaJudge0(CFG.judge0Url,lang,code,stdin)]);
   const errs=[];
   for(const[n,f]of T){try{say("Compiling & running on "+n+"…");return await f()}catch(e){errs.push(n+": "+(e.name==="AbortError"?"timed out":e.message))}}
   throw new Error(errs.join("\n"));
@@ -55,7 +64,17 @@ async function runPython(code,say){
   const py=await getPy(),out=[];
   py.setStdout({batched:s=>out.push(s)});py.setStderr({batched:s=>out.push(s)});
   say("Loading packages…");
-  await py.loadPackagesFromImports(code,{messageCallback:say,errorCallback:say});
+  try{
+    await py.loadPackagesFromImports(code,{messageCallback:say,errorCallback:say});
+  }catch(e){say("Some packages are not in the built-in distribution — trying PyPI next…")}
+  /* seaborn is pure Python and not part of the Pyodide distribution, so pull it from PyPI */
+  if(/\bseaborn\b|\bsns\./.test(code)){
+    say("Installing seaborn from PyPI…");
+    try{
+      await py.loadPackage("micropip");
+      await py.runPythonAsync("import micropip\nawait micropip.install('seaborn')\n");
+    }catch(e){out.push("── setup ──\nseaborn could not be installed: "+(e.message||e))}
+  }
   say("Running…");
   const g=py.globals.get("dict")(),imgs=[];
   let err="";

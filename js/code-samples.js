@@ -662,8 +662,13 @@ const PYO={
 function pythonFor(sub,eid){
   const pre=PRE[eid]||"";
   /* PYO[] holds legacy one-off Python overrides from the reference site; data.js now
-     carries the real, verified script for every sub-experiment, so sub.code wins. */
-  let body=String(sub.code||"").replace(/plt\.show\(\);?/g,"").replace(/;\s*$/gm,"");
+     carries the real, verified script for every sub-experiment, so sub.code wins.
+     Figures are kept open (no plt.show / plt.close in the browser) so the panel can
+     render every chart inline instead of only writing it to a file. */
+  let body=String(sub.code||"")
+    .replace(/plt\.show\(\);?/g,"")
+    .replace(/^[ \t]*plt\.close\([^)]*\)[ \t]*$/gm,"")
+    .replace(/;\s*$/gm,"");
   const have=new Set(pre.split("\n"));
   body=body.split("\n").filter(l=>!have.has(l.trim())||/^\s/.test(l)).join("\n");
   return (pre?pre+"\n\n":"")+body.trim()+"\n";

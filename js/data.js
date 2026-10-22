@@ -2985,7 +2985,6 @@ print("  -> the association weakens once study effort is controlled")`,
 import numpy as np
 import pandas as pd
 from scipy import stats
-import statsmodels.api as sm
 
 # Simpson's paradox construction
 simpson = pd.DataFrame({
@@ -3040,29 +3039,43 @@ for label, mask in [("high effort", df["study_hours"] >= 4),
         print("  %-12s free=%6.2f (n=%d)  standard=%6.2f (n=%d)  diff=%+.2f" % (
             label, f.mean(), len(f), s.mean(), len(s), f.mean() - s.mean()))
 
-# Regression with and without the confounder
-X_plain = sm.add_constant(pd.DataFrame({
-    "standard": (df["lunch"] == "standard").astype(int),
-}))
+# Regression with and without the confounder (closed-form OLS)
+def ols_fit(y, columns, names):
+    yv = np.asarray(y, dtype=float)
+    X = np.column_stack([np.ones(len(yv))] +
+                        [np.asarray(c, dtype=float) for c in columns])
+    beta, *_ = np.linalg.lstsq(X, yv, rcond=None)
+    resid = yv - X @ beta
+    n, k = X.shape
+    dof = n - k
+    sigma2 = float(resid @ resid) / dof
+    cov = sigma2 * np.linalg.inv(X.T @ X)
+    se = np.sqrt(np.diag(cov))
+    tvals = beta / se
+    pvals = 2 * stats.t.sf(np.abs(tvals), dof)
+    ss_tot = float(((yv - yv.mean()) ** 2).sum())
+    r2 = 1 - float(resid @ resid) / ss_tot
+    return {nm: (beta[i], se[i], tvals[i], pvals[i])
+            for i, nm in enumerate(names)}, r2
+
 y = df["maths"]
-m1 = sm.OLS(y, X_plain).fit()
-print("\\nOLS without confounder: lunch coefficient = %+.3f" %
-      m1.params["standard"])
+lunch_std = (df["lunch"] == "standard").astype(int)
+m1, r2_plain = ols_fit(y, [lunch_std], ["const", "standard"])
+print()
+print("OLS without confounder: lunch coefficient = %+.3f" % m1["standard"][0])
 
-X_full = sm.add_constant(pd.DataFrame({
-    "standard": (df["lunch"] == "standard").astype(int),
-    "study_hours": df["study_hours"],
-}))
-m2 = sm.OLS(y, X_full).fit()
-print("OLS with confounder   : lunch coefficient = %+.3f" %
-      m2.params["standard"])
+m2, r2_full = ols_fit(y, [lunch_std, df["study_hours"]],
+                      ["const", "standard", "study_hours"])
+print("OLS with confounder   : lunch coefficient = %+.3f" % m2["standard"][0])
 print("study_hours coefficient = %+.3f (p=%.4f)" % (
-    m2.params["study_hours"], m2.pvalues["study_hours"]))
-print("R^2 before=%.4f after=%.4f" % (m1.rsquared, m2.rsquared))
+    m2["study_hours"][0], m2["study_hours"][3]))
+print("R^2 before=%.4f after=%.4f" % (r2_plain, r2_full))
 
-print("\\nConclusion: lunch on its own explains R^2=%.4f of the variance, but adding" % m1.rsquared)
+print()
+print("Conclusion: lunch on its own explains R^2=%.4f of the variance, but adding" % r2_plain)
 print("study hours lifts it to %.4f with a coefficient of %+.3f (p=%.4f)." % (
-    m2.rsquared, m2.params["study_hours"], m2.pvalues["study_hours"]))
+    r2_full, m2["study_hours"][0], m2["study_hours"][3]))
+
 print("The lunch association changes sign between the two effort strata, so the")
 print("pooled difference of %+.2f conceals opposite-signed stratum effects" % (free.mean() - std.mean()))
 print("instead of measuring an independent effect of lunch support.")`,
