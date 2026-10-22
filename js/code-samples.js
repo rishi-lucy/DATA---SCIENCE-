@@ -3,6 +3,9 @@
    Edit freely: K[id] = [C body, C++ body, Java body]. */
 (function(){
 const r=String.raw;
+/* Sub-experiment ids in data.js are zero-padded ("01A"); the K / PYO tables below
+   are keyed without the pad ("1A"), so normalise before looking anything up. */
+const nid = id => String(id).replace(/^0/, "");
 const ind=(s,n)=>s.split("\n").map(l=>" ".repeat(n)+l).join("\n");
 const WRAP={
 c:b=>"#include <stdio.h>\n\n"+
@@ -658,7 +661,9 @@ const PYO={
 };
 function pythonFor(sub,eid){
   const pre=PRE[eid]||"";
-  let body=PYO[sub.id]||String(sub.code||"").replace(/plt\.show\(\);?/g,"").replace(/;\s*$/gm,"");
+  /* PYO[] holds legacy one-off Python overrides from the reference site; data.js now
+     carries the real, verified script for every sub-experiment, so sub.code wins. */
+  let body=String(sub.code||"").replace(/plt\.show\(\);?/g,"").replace(/;\s*$/gm,"");
   const have=new Set(pre.split("\n"));
   body=body.split("\n").filter(l=>!have.has(l.trim())||/^\s/.test(l)).join("\n");
   return (pre?pre+"\n\n":"")+body.trim()+"\n";
@@ -672,7 +677,7 @@ for(int i=1;i<=5;i++) printf("%d %d\n",i,i*i);`),
 for(int i=1;i<=5;i++) cout<<i<<" "<<i*i<<"\n";`)
 };
 function codesFor(sub,eid){
-  const k=K[sub.id];
+  const k=K[nid(sub.id)];
   const c={Python:pythonFor(sub,eid)};
   if(k){c.C=WRAP.c(k[0]);c["C++"]=WRAP.cpp(k[1]);c.Java=WRAP.java(k[2]);}
   else{c.C=HELLO.C;c["C++"]=HELLO["C++"];c.Java=HELLO.Java}
