@@ -3,7 +3,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const J=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch{return d}};
 (()=>{try{const o=J("mbu_student",{});if(o.name==="Manchala Bhargavi"){o.name=student.name;localStorage.setItem("mbu_student",JSON.stringify(o))}}catch(e){}})(); /* replaces a previously saved old name */
 const _saved=J("mbu_student",{});
-if(_saved.name==="Manchala Bhargavi"||_saved.rollNo==="24102A030088"){localStorage.removeItem("mbu_student");for(const k in _saved)delete _saved[k]}  /* drop old cached profile */
+if(["Manchala Bhargavi","Pujala Geetha Nandini"].includes(_saved.name)||["24102A030088","24102A030099"].includes(_saved.rollNo)){localStorage.removeItem("mbu_student");for(const k in _saved)delete _saved[k]}  /* drop cached profiles from earlier defaults */
 const S=Object.assign({},student,_saved);S.social=Object.assign({},student.social,S.social);
 if(!S.img)S.img=S.profileImage||"assets/images/profile.jpg";
 const ALL=experiments.concat(J("mbu_exps",[]));

@@ -10,10 +10,10 @@
 
 /* ---------------------------------------------------------------- student */
 const student = {
-  name: "Pujala Geetha Nandini",
-  rollNo: "24102A030099",
+  name: "Vungarala Rishiesh",
+  rollNo: "24102A030183",
   department: "Data Science",
-  section: "2",
+  section: "3",
   subject: "Data Science",
   faculty: "Bosubabu",
   designation: "ASSISTANT PROFESSOR",
