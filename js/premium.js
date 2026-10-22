@@ -5,6 +5,7 @@
 (function(){
  const RM=window.matchMedia?window.matchMedia("(prefers-reduced-motion: reduce)"):{matches:false};
  const reduce=()=>!!RM.matches;
+ const fine=()=>window.matchMedia?window.matchMedia("(pointer:fine)").matches:true;
  const seenReveal=new WeakSet(),seenCount=new WeakSet();
 
  /* ---------- reveal on scroll ---------- */
@@ -55,6 +56,122 @@
   });
  }
 
+ /* ---------- ambient aurora ---------- */
+ function ambient(){
+  if(reduce()||document.querySelector(".pr-ambient"))return;
+  const box=document.createElement("div");
+  box.className="pr-ambient";box.setAttribute("aria-hidden","true");
+  box.innerHTML="<i></i><i></i><i></i>";
+  document.body.prepend(box);
+ }
+
+ /* ---------- hero: spotlight, depth parallax, rising sparks ---------- */
+ function bindHero(){
+  const h=document.querySelector(".hero");
+  if(!h||h.dataset.prHero)return;
+  h.dataset.prHero="1";
+  if(!reduce()){
+   const sparks=document.createElement("div");
+   sparks.className="pr-sparks";sparks.setAttribute("aria-hidden","true");
+   for(let i=0;i<12;i++){
+    const s=document.createElement("i");
+    s.style.left=(4+Math.random()*88).toFixed(2)+"%";
+    s.style.top=(12+Math.random()*72).toFixed(2)+"%";
+    s.style.setProperty("--dur",(7+Math.random()*7).toFixed(2)+"s");
+    s.style.setProperty("--delay",(-Math.random()*14).toFixed(2)+"s");
+    sparks.appendChild(s);
+   }
+   h.appendChild(sparks);
+  }
+  if(!fine()||reduce())return;
+  let raf=0,lx=.5,ly=.5;
+  const move=e=>{
+   const r=h.getBoundingClientRect();
+   if(!r.width||!r.height)return;
+   lx=(e.clientX-r.left)/r.width;ly=(e.clientY-r.top)/r.height;
+   if(raf)return;
+   raf=requestAnimationFrame(()=>{
+    raf=0;
+    h.style.setProperty("--mx",(lx*100).toFixed(1)+"%");
+    h.style.setProperty("--my",(ly*100).toFixed(1)+"%");
+    h.style.setProperty("--vx",((lx-.5)*-16).toFixed(1)+"px");
+    h.style.setProperty("--vy",((ly-.5)*-10).toFixed(1)+"px");
+    h.style.setProperty("--sx",((lx-.5)*24).toFixed(1)+"px");
+    h.style.setProperty("--sy",((ly-.5)*14).toFixed(1)+"px");
+   });
+  };
+  const leave=()=>{
+   ["--vx","--vy","--sx","--sy"].forEach(v=>h.style.setProperty(v,"0px"));
+  };
+  h.addEventListener("pointermove",move,{passive:true});
+  h.addEventListener("pointerleave",leave,{passive:true});
+ }
+
+ /* ---------- magnetic call-to-action buttons ---------- */
+ function magnetic(){
+  if(!fine()||reduce())return;
+  document.querySelectorAll(".hero-cta .btn,.page-head .head-actions .btn,.res-head .cta-red,.detail-head .btn").forEach(b=>{
+   if(b.dataset.prMag)return;
+   b.dataset.prMag="1";
+   b.addEventListener("pointermove",e=>{
+    const r=b.getBoundingClientRect();
+    if(!r.width||!r.height)return;
+    b.style.setProperty("--mag-x",(((e.clientX-r.left)/r.width-.5)*8).toFixed(2)+"px");
+    b.style.setProperty("--mag-y",(((e.clientY-r.top)/r.height-.5)*6).toFixed(2)+"px");
+   },{passive:true});
+   const reset=()=>{b.style.setProperty("--mag-x","0px");b.style.setProperty("--mag-y","0px")};
+   b.addEventListener("pointerleave",reset,{passive:true});
+   b.addEventListener("blur",reset);
+  });
+ }
+
+ /* ---------- sliding active-nav pill ---------- */
+ let pillRaf=0;
+ function alignPill(){
+  if(pillRaf)return;
+  pillRaf=requestAnimationFrame(()=>{
+   pillRaf=0;
+   const nav=document.querySelector(".top");
+   if(!nav)return;
+   const active=nav.querySelector("a.on");
+   let pill=nav.querySelector(".pr-nav-pill");
+   const show=!!active&&window.innerWidth>1200&&!reduce();
+   if(!show){
+    nav.classList.remove("has-pill");
+    if(pill)pill.style.opacity="0";
+    return;
+   }
+   if(!pill){
+    pill=document.createElement("span");
+    pill.className="pr-nav-pill";pill.setAttribute("aria-hidden","true");
+    nav.prepend(pill);
+   }
+   const nr=nav.getBoundingClientRect(),ar=active.getBoundingClientRect();
+   if(!ar.width)return;
+   pill.style.width=ar.width+"px";
+   pill.style.height=ar.height+"px";
+   pill.style.transform="translate3d("+Math.round(ar.left-nr.left)+"px,"+Math.round(ar.top-nr.top)+"px,0)";
+   nav.classList.add("has-pill");
+   requestAnimationFrame(()=>{pill.style.opacity="1"});
+  });
+ }
+
+ /* ---------- button ripples ---------- */
+ document.addEventListener("pointerdown",e=>{
+  if(reduce())return;
+  const b=e.target.closest?e.target.closest(".btn,.pill,.icon-btn,.chip,.burger"):null;
+  if(!b||b.disabled)return;
+  if(getComputedStyle(b).position==="static")b.style.position="relative";
+  const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*1.7;
+  const s=document.createElement("span");
+  s.className="pr-ripple";
+  s.style.width=s.style.height=d+"px";
+  s.style.left=(e.clientX-r.left-d/2)+"px";
+  s.style.top=(e.clientY-r.top-d/2)+"px";
+  b.appendChild(s);
+  setTimeout(()=>s.remove(),700);
+ },{passive:true});
+
  /* ---------- scan newly rendered content ---------- */
  function scan(root){
   root=root||document;
@@ -71,6 +188,9 @@
   root.querySelectorAll(".reveal").forEach(reveal);
   bars(root);
   root.querySelectorAll("[data-count]").forEach(count);
+  bindHero();
+  magnetic();
+  alignPill();
  }
 
  /* ---------- sticky nav state + reading progress ---------- */
@@ -89,11 +209,14 @@
    document.querySelectorAll(".reveal:not(.in)").forEach(el=>{
     if(el.getBoundingClientRect().top<window.innerHeight-24)el.classList.add("in");
    });
+   const hero=document.querySelector(".hero");
+   if(hero&&!reduce())hero.style.setProperty("--scroll-y",Math.min(30,y*.055).toFixed(1)+"px");
    ticking=false;
   });
  }
  window.addEventListener("scroll",onScroll,{passive:true});
  window.addEventListener("resize",onScroll,{passive:true});
+ window.addEventListener("resize",alignPill,{passive:true});
  onScroll();
 
  /* ---------- theme toggle sync ---------- */
@@ -156,7 +279,7 @@
  window.PR={refresh:()=>scan(document),reduce,count};
 
  /* ---------- boot ---------- */
- const start=()=>{scan(document);onScroll();syncTheme()};
+ const start=()=>{ambient();scan(document);onScroll();syncTheme();alignPill()};
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>requestAnimationFrame(start));
  else requestAnimationFrame(start);
 })();

@@ -910,8 +910,8 @@ iframe{background:#fff;border-radius:14px}
 .pbook{width:min(92vw,760px);box-shadow:0 30px 60px rgba(9,18,34,.18)}
 
 /* ---------- motion ---------- */
-.reveal{opacity:0;translate:0 22px;transition:opacity .6s var(--ease),translate .6s var(--ease)}
-.reveal.in{opacity:1;translate:0 0}
+.reveal{opacity:0;translate:0 26px;scale:.985;filter:blur(6px);transition:opacity .68s var(--ease),translate .68s var(--ease),scale .68s var(--ease),filter .68s var(--ease)}
+.reveal.in{opacity:1;translate:0 0;scale:1;filter:none}
 .stagger>*{transition-delay:calc(var(--i,0)*55ms)}
 @keyframes floaty{0%,100%{transform:translateY(0) rotate(var(--rot,0deg))}50%{transform:translateY(-12px) rotate(var(--rot,0deg))}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -933,6 +933,119 @@ a:focus-visible,button:focus-visible{outline-offset:3px}
   background:var(--card);border:1px solid var(--acc);font:700 12px var(--ff-body);
 }
 .skip-link:focus{left:12px}
+
+/* ---------- kinetic motion layer ---------- */
+@property --p{syntax:"<number>";inherits:false;initial-value:0}
+@keyframes auroraDrift{
+  0%,100%{transform:translate3d(-3%,-2%,0) scale(1)}
+  33%{transform:translate3d(5%,4%,0) scale(1.09)}
+  66%{transform:translate3d(-2%,6%,0) scale(.96)}
+}
+@keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes sparkRise{
+  0%{transform:translate3d(0,18px,0) scale(.5);opacity:0}
+  18%{opacity:.85}
+  75%{opacity:.5}
+  100%{transform:translate3d(14px,-130px,0) scale(1.15);opacity:0}
+}
+@keyframes rippleOut{to{transform:scale(1);opacity:0}}
+@keyframes ringFill{from{--p:0}}
+
+/* ambient aurora — slow, continuous background motion */
+.pr-ambient{position:fixed;inset:-12%;z-index:-2;pointer-events:none;overflow:hidden;opacity:.75}
+.pr-ambient i{
+  position:absolute;width:48rem;height:48rem;border-radius:50%;filter:blur(78px);
+  background:radial-gradient(circle at 38% 36%,color-mix(in srgb,var(--baby) 78%,transparent),transparent 68%);
+  animation:auroraDrift 30s ease-in-out infinite;will-change:transform;
+}
+.pr-ambient i:nth-child(1){top:-18rem;right:-14rem}
+.pr-ambient i:nth-child(2){
+  bottom:-20rem;left:-16rem;width:40rem;height:40rem;
+  background:radial-gradient(circle at 60% 40%,color-mix(in srgb,var(--yellow) 30%,transparent),transparent 68%);
+  animation-duration:38s;animation-delay:-12s;
+}
+.pr-ambient i:nth-child(3){
+  top:30%;left:36%;width:32rem;height:32rem;
+  background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--acc-2) 24%,transparent),transparent 70%);
+  animation-duration:44s;animation-delay:-20s;
+}
+[data-theme=dark] .pr-ambient{opacity:.5}
+
+/* hero: cursor spotlight + multi-depth parallax */
+.hero{--mx:50%;--my:28%;--vx:0px;--vy:0px;--sx:0px;--sy:0px;--scroll-y:0px}
+.hero::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;border-radius:inherit;
+  background:radial-gradient(26rem 22rem at var(--mx) var(--my),color-mix(in srgb,var(--acc) 20%,transparent),transparent 68%);
+  transition:opacity .45s ease;
+}
+.hero:hover::before,.hero:focus-within::before{opacity:1}
+.hero .pr-sparks{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+.hero .pr-sparks i{
+  position:absolute;width:5px;height:5px;border-radius:50%;opacity:0;
+  background:color-mix(in srgb,var(--acc) 70%,#fff);
+  box-shadow:0 0 12px color-mix(in srgb,var(--acc) 60%,transparent);
+  animation:sparkRise var(--dur,9s) linear var(--delay,0s) infinite;
+}
+.hero .pr-sparks i:nth-child(3n){background:var(--yellow);box-shadow:0 0 14px #FFD70066}
+.hero .pr-sparks i:nth-child(4n){width:3px;height:3px}
+.hero h1 .grad-text{
+  background-image:linear-gradient(100deg,#2F6BFF 0%,#14B8A6 34%,#8B7BFF 58%,#2F6BFF 100%);
+  background-size:260% 100%;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;animation:gradShift 9s ease-in-out infinite;
+}
+.hero-visual{transform:translate3d(var(--vx),calc(var(--vy) + var(--scroll-y)),0);transition:transform .35s var(--ease)}
+.hero>.stage3d{transform:translate3d(var(--sx),calc(-50% + var(--sy) + var(--scroll-y)),0);transition:transform .45s var(--ease)}
+
+/* animated page titles + growing section underline */
+.page-head .page-title,.res-head h1{
+  background-image:linear-gradient(100deg,var(--tx) 0%,color-mix(in srgb,var(--acc) 68%,var(--tx)) 46%,var(--tx) 82%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;animation:gradShift 11s ease-in-out infinite;
+}
+.sec .section-head h2{position:relative;display:inline-block;padding-bottom:5px}
+.sec .section-head h2::after{
+  content:"";position:absolute;left:0;bottom:0;width:100%;height:2px;border-radius:2px;
+  background:var(--grad);transform:scaleX(0);transform-origin:left;
+  transition:transform .85s var(--ease) .15s;
+}
+.sec.in .section-head h2::after{transform:scaleX(1)}
+
+/* sliding active-nav pill */
+.top{position:relative}
+.pr-nav-pill{
+  position:absolute;left:0;top:0;z-index:0;pointer-events:none;opacity:0;border-radius:13px;
+  background:linear-gradient(135deg,#2F6BFF,#14B8A6);
+  box-shadow:0 10px 22px color-mix(in srgb,#2F6BFF 38%,transparent),inset 0 1px 0 #ffffff40;
+  transition:transform .5s cubic-bezier(.34,1.56,.64,1),width .5s var(--ease),height .5s var(--ease),opacity .22s;
+}
+.top.has-pill a{z-index:1}
+.top.has-pill a.on{background:transparent;border-color:transparent;box-shadow:none}
+
+/* buttons: magnetic drift + click ripple */
+.btn,.pill{transform:translate3d(var(--mag-x,0px),var(--mag-y,0px),0)}
+.btn:hover,.pill:hover{transform:translate3d(var(--mag-x,0px),calc(var(--mag-y,0px) - 2px),0)}
+.btn:active,.pill:active{transform:translate3d(var(--mag-x,0px),calc(var(--mag-y,0px) + 1px),0) scale(.99)}
+.btn,.pill,.icon-btn,.chip,.burger{position:relative;overflow:hidden}
+.pr-ripple{
+  position:absolute;border-radius:50%;pointer-events:none;z-index:3;
+  background:radial-gradient(circle,color-mix(in srgb,#ffffff 62%,transparent) 0%,transparent 68%);
+  transform:scale(0);animation:rippleOut .62s ease-out forwards;
+}
+[data-theme=dark] .pr-ripple{background:radial-gradient(circle,color-mix(in srgb,#ffffff 30%,transparent) 0%,transparent 68%)}
+
+/* progress rings count up from zero */
+.ring{animation:ringFill 1.15s var(--ease) both}
+
+@media(max-width:760px){
+  .pr-ambient,.hero .pr-sparks{display:none}
+}
+@media(max-width:1200px){
+  .pr-nav-pill{display:none}
+  .top.has-pill a.on{
+    background:linear-gradient(135deg,#2F6BFF,#14B8A6);
+    box-shadow:0 10px 22px color-mix(in srgb,#2F6BFF 38%,transparent),inset 0 1px 0 #ffffff40;
+  }
+}
 
 /* ---------- responsive ---------- */
 @media(max-width:1200px){
@@ -1019,7 +1132,13 @@ a:focus-visible,button:focus-visible{outline-offset:3px}
 /* ---------- reduced motion ---------- */
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
-  .reveal{opacity:1!important;translate:none!important}
+  .reveal{opacity:1!important;translate:none!important;scale:none!important;filter:none!important}
   .hv-code,.hv-chart,.hv-book,.hv-badge,.hv-ring{animation:none!important}
   .cube3d{animation:none!important}
+  .pr-ambient,.hero .pr-sparks,.pr-nav-pill,.pr-ripple{display:none!important}
+  .hero-visual{transform:none!important}
+  .hero>.stage3d{transform:translateY(-50%)!important}
+  .hero h1 .grad-text,.page-head .page-title,.res-head h1{animation:none!important}
+  .ring{animation:none!important}
+  .btn,.pill,.btn:hover,.pill:hover,.btn:active,.pill:active{transform:none!important}
 }
