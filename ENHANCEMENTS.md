@@ -16,6 +16,6 @@ Enhanced edition updates are documented in UPGRADE_NOTES.md.
 ## 3D Studio and compiler update
 - Added a consistent premium 3D-inspired visual system with layered depth, raised controls, perspective, and hover transitions.
 - Added a four-language compiler panel (Python, Java, C, C++) to each experiment overview and each sub-experiment.
-- Compiler submissions use the Piston public execution API; a network connection and availability of that service are required. This static project does not include a private server-side compiler proxy.
+- Compiler submissions use the public Wandbox API, with Piston and Judge0 attempted next if Wandbox is unavailable; a network connection and availability of those services are required. This static project does not include a private server-side compiler proxy.
 - Updated sub-experiment labels to human-readable numbering such as 1A, 1B, 1C.
 - Enhanced the module PDF flipbook frame and page-turn transition with perspective and page-stack depth.

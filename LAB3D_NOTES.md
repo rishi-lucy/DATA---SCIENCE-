@@ -4,7 +4,7 @@
 - **3D theme everywhere** (`css/lab3d.css`): glass cards with depth, raised 3D buttons, tilt-on-hover cards, spinning 3D cube + perspective grid on Home, light/dark modes.
 - **4 languages for every experiment** (`js/lab3d.js`, `js/code-samples.js`): every experiment page and every sub-experiment page (1A, 1B, 1C ...) has a Python / Java / C / C++ lab. Each of the 42 sub-experiments has real code in all four languages. Edit it in the browser, press Run (Ctrl+Enter).
   - Python runs inside the browser (Pyodide: NumPy, Pandas, Matplotlib, Seaborn, scikit-learn). Charts appear under the output.
-  - Java, C and C++ are compiled by an online service (Piston, with Judge0 as automatic fallback).
+  - Java, C and C++ are compiled by an online service (Wandbox first, then Piston, then Judge0 as automatic fallbacks).
 - **3D PDF flipbook** on every Module page: real page-turn animation (click a page, Next/Prev, or arrow keys). The "Vertical view" and "Download PDF" are still there.
 - **Bug fix:** a stray `async` in `app.js` threw an error and stopped the script, which left pages blank. Removed.
 
