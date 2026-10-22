@@ -143,7 +143,7 @@ function head(){
  const dark=document.documentElement.dataset.theme==="dark";
  return `<a class="skip-link" href="#main">Skip to content</a>
  <div class="bar">
-  <a class="logo" href="index.html" aria-label="Mohan Babu University — home"><img src="assets/images/mbu-logo.png" alt="Mohan Babu University logo" onerror="this.replaceWith('MBU')"><span class="logo-txt"><b>Digital Library</b><small>Data Science · MBU</small></span></a>
+  <a class="logo" href="index.html" aria-label="Data Science Portal — home"><span class="logo-txt"><b>Digital Library</b><small>Data Science · MBU</small></span></a>
   <header><nav class="top nav" id="tn" aria-label="Main">
    <button class="burger" aria-expanded="false" aria-label="Open menu" onclick="const t=$('#tn');t.classList.toggle('open');this.setAttribute('aria-expanded',t.classList.contains('open'))">${IC.menu}<span>Menu</span></button>
    ${items.map(x=>`<a href="${x[0]}" ${on(x)?'class="on" aria-current="page"':""}>${x[3]}<span>${x[1]}</span></a>`).join("")}
@@ -662,7 +662,7 @@ function studentPage(){
   </div>
   <div class="grid" style="gap:16px">
    <div class="card idc">
-    <div class="row sp"><div class="logo" style="margin:0"><img src="assets/images/mbu-logo.png" alt="MBU logo" onerror="this.replaceWith('MBU')"></div><span class="lbl">Student ID · 2026</span></div>
+    <div class="row sp"><span class="lbl">Student ID · 2026</span></div>
     <hr style="margin:14px 0">
     <div class="row" style="gap:14px"><div class="avatar" style="width:78px;height:78px;overflow:hidden" onclick="preview()" role="button" tabindex="0">${imgOr()}</div><div><b style="font-family:var(--ff-disp);font-size:15px">${esc(S.name)}</b><div class="lbl" style="font-size:9px">${esc(S.rollNo)}</div></div></div>
     <dl><dt>Department</dt><dd>${esc(S.department)}</dd><dt>Section</dt><dd>${esc(S.section)}</dd><dt>Subject</dt><dd>${esc(S.subject)}</dd><dt>Degree</dt><dd>${esc(S.degree)} · ${esc(S.year)}</dd><dt>Faculty</dt><dd>${esc(S.faculty)}<div class="lbl" style="font-size:9px">${esc(S.designation)}</div></dd></dl>
